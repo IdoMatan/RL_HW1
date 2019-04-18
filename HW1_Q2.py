@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Language:
-    def __init__(self, language_cell=['B', 'K', 'O', '-'], starting_letter_idx=1, word_length=10):
+    def __init__(self, language_cell=['B', 'K', 'O', '-'], starting_letter_idx=1, word_length=5):
         self.languageCell = language_cell
         self.startingLetterIdx = starting_letter_idx
         self.endingLetterIdx = self.languageCell.__len__()
@@ -13,27 +13,25 @@ class Language:
                                         [0, 0, 0, 0]])  # 0 probability to transtion out of definitions since we are only considering a single word then we want there to be no transition probability from the end of word letter '-' to any other letter
 
         self.K = word_length
-        self.bestWord = "x" * self.K
+        self.bestWord = "B"
 
-        self.dynProgArrayWord = np.zeros((self.languageCell.__len__(), self.K + 1))
+        self.dynProgArrayWord = np.zeros((self.languageCell.__len__(), self.K))
         self.dynProgArrayCost = np.zeros((self.languageCell.__len__(), self.K + 1))
 
-        # self.dynProgArrayCost = np.ones((self.startingLetterIdx, 1))
-        # self.dynProgArrayCost[self.startingLetterIdx, 0] = 1
-        self.dynProgArrayCost[:, 0] = np.ones((1, self.languageCell.__len__()))
+        self.dynProgArrayCost[3, self.K] = 1
 
-    # @staticmethod
     def find_best_word(self):
         # Dynamic Programming
-        for kk in range(1, self.K + 1):
-            curProbabilityMat = np.dot(self.pTransitionMat, self.dynProgArrayCost[:, kk-1])
-            self.dynProgArrayCost[:, kk], self.dynProgArrayWord[:, kk] = np.max(curProbabilityMat)
+        for kk in range(self.K, 0, -1):
+            for jj in range(4):
+                curProbabilityMat = np.multiply(self.pTransitionMat[jj], self.dynProgArrayCost[:, kk])
+                self.dynProgArrayCost[jj, kk-1], self.dynProgArrayWord[jj, kk-1] = np.max(curProbabilityMat), np.argmax(curProbabilityMat)
 
-#  Reconstruct highest probability word
-        curLetterIdx = self.endingLetterIdx  # index of the of word letter
-        for kk in range((self.K + 1), 2, -1):
-            curLetterIdx = Language.dynProgArrayWord[curLetterIdx, kk]
-            self.bestWord[kk - 1] = self.languageCell[curLetterIdx]
+        #  Reconstruct highest probability word
+        curLetterIdx = np.argmax(self.dynProgArrayCost[:, kk-1])  # index of the of word firs letter
+        for kk in range(self.K):
+            curLetterIdx = self.dynProgArrayWord[int(curLetterIdx), kk]
+            self.bestWord += self.languageCell[int(curLetterIdx)]
 
 
 def main():
@@ -45,5 +43,4 @@ def main():
 
 
 main()
-
 
